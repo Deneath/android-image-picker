@@ -46,7 +46,7 @@ public class ImagePickerAdapter extends BaseListAdapter<ImagePickerAdapter.Image
     }
 
     @Override
-    public void onBindViewHolder(ImageViewHolder viewHolder, int position) {
+    public void onBindViewHolder(ImageViewHolder viewHolder, final int position) {
 
         final Image image = images.get(position);
         final boolean isSelected = isSelected(image);
@@ -76,15 +76,19 @@ public class ImagePickerAdapter extends BaseListAdapter<ImagePickerAdapter.Image
                 ? 0.5f
                 : 0f);
 
-        viewHolder.itemView.setOnClickListener(v -> {
-            boolean shouldSelect = itemClickListener.onImageClick(
-                    isSelected
-            );
+        viewHolder.itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                boolean shouldSelect = itemClickListener.onImageClick(
+                        isSelected
+                );
 
-            if (isSelected) {
-                removeSelectedImage(image, position);
-            } else if (shouldSelect) {
-                addSelected(image, position);
+                if (isSelected) {
+                    removeSelectedImage(image, position);
+                } else if (shouldSelect) {
+                    addSelected(image, position);
+                }
+
             }
         });
 
@@ -114,23 +118,32 @@ public class ImagePickerAdapter extends BaseListAdapter<ImagePickerAdapter.Image
     }
 
     private void addSelected(final Image image, final int position) {
-        mutateSelection(() -> {
-            selectedImages.add(image);
-            notifyItemChanged(position);
+        mutateSelection(new Runnable() {
+            @Override
+            public void run() {
+                selectedImages.add(image);
+                notifyItemChanged(position);
+            }
         });
     }
 
     private void removeSelectedImage(final Image image, final int position) {
-        mutateSelection(() -> {
-            selectedImages.remove(image);
-            notifyItemChanged(position);
+        mutateSelection(new Runnable() {
+            @Override
+            public void run() {
+                selectedImages.remove(image);
+                notifyItemChanged(position);
+            }
         });
     }
 
     public void removeAllSelectedSingleClick() {
-        mutateSelection(() -> {
-            selectedImages.clear();
-            notifyDataSetChanged();
+        mutateSelection(new Runnable() {
+            @Override
+            public void run() {
+                selectedImages.clear();
+                notifyDataSetChanged();
+            }
         });
     }
 

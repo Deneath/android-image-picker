@@ -2,6 +2,7 @@ package com.esafirm.imagepicker.features;
 
 import com.esafirm.imagepicker.features.cameraonly.CameraOnlyConfig;
 import com.esafirm.imagepicker.features.imageloader.DefaultImageLoader;
+import com.esafirm.imagepicker.model.Image;
 
 import java.util.ArrayList;
 
@@ -20,7 +21,7 @@ public class ImagePickerConfigFactory {
         config.setLimit(IpCons.MAX_LIMIT);
         config.setShowCamera(true);
         config.setFolderMode(false);
-        config.setSelectedImages(new ArrayList<>());
+        config.setSelectedImages(new ArrayList<Image>());
         config.setSavePath(ImagePickerSavePath.DEFAULT);
         config.setReturnMode(ReturnMode.NONE);
         config.setImageLoader(new DefaultImageLoader());

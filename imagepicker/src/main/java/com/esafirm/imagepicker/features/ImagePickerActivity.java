@@ -15,6 +15,7 @@ import android.os.Handler;
 import android.os.Parcelable;
 import android.provider.MediaStore;
 import android.provider.Settings;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
@@ -22,6 +23,7 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.appcompat.widget.Toolbar;
+
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -41,6 +43,9 @@ import com.esafirm.imagepicker.helper.ImagePickerPreferences;
 import com.esafirm.imagepicker.helper.IpLogger;
 import com.esafirm.imagepicker.helper.LocaleManager;
 import com.esafirm.imagepicker.helper.ViewUtils;
+import com.esafirm.imagepicker.listeners.OnFolderClickListener;
+import com.esafirm.imagepicker.listeners.OnImageClickListener;
+import com.esafirm.imagepicker.listeners.OnImageSelectedListener;
 import com.esafirm.imagepicker.model.Folder;
 import com.esafirm.imagepicker.model.Image;
 import com.esafirm.imagepicker.view.SnackBarView;
@@ -161,20 +166,34 @@ public class ImagePickerActivity extends AppCompatActivity implements ImagePicke
         }
     }
 
-    private void setupRecyclerView(ImagePickerConfig config) {
+    private void setupRecyclerView(final ImagePickerConfig config) {
         recyclerViewManager = new RecyclerViewManager(
                 recyclerView,
                 config,
                 getResources().getConfiguration().orientation
         );
 
-        recyclerViewManager.setupAdapters((isSelected) -> recyclerViewManager.selectImage(isSelected)
-                , bucket -> setImageAdapter(bucket.getImages()));
+        recyclerViewManager.setupAdapters(new OnImageClickListener() {
+                                              @Override
+                                              public boolean onImageClick(boolean isSelected) {
+                                                  recyclerViewManager.selectImage(isSelected);
+                                                  return false;
+                                              }
+                                          }
+                , new OnFolderClickListener() {
+                    @Override
+                    public void onFolderClick(Folder bucket) {
+                        setImageAdapter(bucket.getImages());
+                    }
+                });
 
-        recyclerViewManager.setImageSelectedListener(selectedImage -> {
-            invalidateTitle();
-            if (ConfigUtils.shouldReturn(config, false) && !selectedImage.isEmpty()) {
-                onDone();
+        recyclerViewManager.setImageSelectedListener(new OnImageSelectedListener() {
+            @Override
+            public void onSelectionUpdate(List<Image> selectedImage) {
+                invalidateTitle();
+                if (ConfigUtils.shouldReturn(config, false) && !selectedImage.isEmpty()) {
+                    onDone();
+                }
             }
         });
 
@@ -334,7 +353,12 @@ public class ImagePickerActivity extends AppCompatActivity implements ImagePicke
                 preferences.setPermissionRequested(permission);
                 ActivityCompat.requestPermissions(this, permissions, RC_PERMISSION_REQUEST_WRITE_EXTERNAL_STORAGE);
             } else {
-                snackBarView.show(R.string.ef_msg_no_write_external_permission, v -> openAppSettings());
+                snackBarView.show(R.string.ef_msg_no_write_external_permission, new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        openAppSettings();
+                    }
+                });
             }
         }
     }
@@ -364,7 +388,12 @@ public class ImagePickerActivity extends AppCompatActivity implements ImagePicke
                             getString(R.string.ef_msg_no_camera_permission), Toast.LENGTH_SHORT).show();
                     finish();
                 } else {
-                    snackBarView.show(R.string.ef_msg_no_camera_permission, v -> openAppSettings());
+                    snackBarView.show(R.string.ef_msg_no_camera_permission, new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            openAppSettings();
+                        }
+                    });
                 }
             }
         }

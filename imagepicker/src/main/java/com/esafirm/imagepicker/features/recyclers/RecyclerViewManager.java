@@ -68,7 +68,7 @@ public class RecyclerViewManager {
         setItemDecoration(columns);
     }
 
-    public void setupAdapters(OnImageClickListener onImageClickListener, OnFolderClickListener onFolderClickListener) {
+    public void setupAdapters(OnImageClickListener onImageClickListener, final OnFolderClickListener onFolderClickListener) {
         ArrayList<Image> selectedImages = null;
         if (config.getMode() == MODE_MULTIPLE && !config.getSelectedImages().isEmpty()) {
             selectedImages = config.getSelectedImages();
@@ -77,9 +77,12 @@ public class RecyclerViewManager {
         /* Init folder and image adapter */
         final ImageLoader imageLoader = config.getImageLoader();
         imageAdapter = new ImagePickerAdapter(context, imageLoader, selectedImages, onImageClickListener);
-        folderAdapter = new FolderPickerAdapter(context, imageLoader, bucket -> {
-            foldersState = recyclerView.getLayoutManager().onSaveInstanceState();
-            onFolderClickListener.onFolderClick(bucket);
+        folderAdapter = new FolderPickerAdapter(context, imageLoader, new OnFolderClickListener() {
+            @Override
+            public void onFolderClick(Folder bucket) {
+                foldersState = recyclerView.getLayoutManager().onSaveInstanceState();
+                onFolderClickListener.onFolderClick(bucket);
+            }
         });
     }
 

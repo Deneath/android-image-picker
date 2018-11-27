@@ -9,6 +9,7 @@ import android.widget.Toast;
 
 import com.esafirm.imagepicker.R;
 import com.esafirm.imagepicker.features.camera.DefaultCameraModule;
+import com.esafirm.imagepicker.features.camera.OnImageReadyListener;
 import com.esafirm.imagepicker.features.common.BaseConfig;
 import com.esafirm.imagepicker.features.common.BasePresenter;
 import com.esafirm.imagepicker.features.common.ImageLoaderListener;
@@ -53,29 +54,42 @@ class ImagePickerPresenter extends BasePresenter<ImagePickerView> {
         boolean includeVideo = config.isIncludeVideo();
         ArrayList<File> excludedImages = config.getExcludedImages();
 
-        runOnUiIfAvailable(() -> getView().showLoading(true));
+        runOnUiIfAvailable(new Runnable() {
+            @Override
+            public void run() {
+                getView().showLoading(true);
+            }
+        });
 
         imageLoader.loadDeviceImages(isFolder, includeVideo, excludedImages, new ImageLoaderListener() {
             @Override
             public void onImageLoaded(final List<Image> images, final List<Folder> folders) {
-                runOnUiIfAvailable(() -> {
-                    getView().showFetchCompleted(images, folders);
+                runOnUiIfAvailable(new Runnable() {
+                    @Override
+                    public void run() {
+                        getView().showFetchCompleted(images, folders);
 
-                    final boolean isEmpty = folders != null
-                            ? folders.isEmpty()
-                            : images.isEmpty();
+                        final boolean isEmpty = folders != null
+                                ? folders.isEmpty()
+                                : images.isEmpty();
 
-                    if (isEmpty) {
-                        getView().showEmpty();
-                    } else {
-                        getView().showLoading(false);
+                        if (isEmpty) {
+                            getView().showEmpty();
+                        } else {
+                            getView().showLoading(false);
+                        }
                     }
                 });
             }
 
             @Override
             public void onFailed(final Throwable throwable) {
-                runOnUiIfAvailable(() -> getView().showError(throwable));
+                runOnUiIfAvailable(new Runnable() {
+                    @Override
+                    public void run() {
+                        getView().showError(throwable);
+                    }
+                });
             }
         });
     }
@@ -107,11 +121,14 @@ class ImagePickerPresenter extends BasePresenter<ImagePickerView> {
     }
 
     void finishCaptureImage(Context context, Intent data, final BaseConfig config) {
-        getCameraModule().getImage(context, data, images -> {
-            if (ConfigUtils.shouldReturn(config, true)) {
-                getView().finishPickImages(images);
-            } else {
-                getView().showCapturedImage();
+        getCameraModule().getImage(context, data, new OnImageReadyListener() {
+            @Override
+            public void onImageReady(List<Image> image) {
+                if (ConfigUtils.shouldReturn(config, true)) {
+                    getView().finishPickImages(image);
+                } else {
+                    getView().showCapturedImage();
+                }
             }
         });
     }
@@ -120,10 +137,13 @@ class ImagePickerPresenter extends BasePresenter<ImagePickerView> {
         getCameraModule().removeImage();
     }
 
-    private void runOnUiIfAvailable(Runnable runnable) {
-        main.post(() -> {
-            if (isViewAttached()) {
-                runnable.run();
+    private void runOnUiIfAvailable(final Runnable runnable) {
+        main.post(new Runnable() {
+            @Override
+            public void run() {
+                if (isViewAttached()) {
+                    runnable.run();
+                }
             }
         });
     }

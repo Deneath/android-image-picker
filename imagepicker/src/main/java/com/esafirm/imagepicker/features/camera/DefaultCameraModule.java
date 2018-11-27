@@ -59,17 +59,20 @@ public class DefaultCameraModule implements CameraModule, Serializable {
         final Uri imageUri = Uri.parse(currentImagePath);
         if (imageUri != null) {
             MediaScannerConnection.scanFile(context.getApplicationContext(),
-                    new String[]{imageUri.getPath()}, null, (path, uri) -> {
+                    new String[]{imageUri.getPath()}, null, new MediaScannerConnection.OnScanCompletedListener(){
+                        @Override
+                        public void onScanCompleted(String path, Uri uri) {
+                            IpLogger.getInstance().d("File " + path + " was scanned successfully: " + uri);
 
-                        IpLogger.getInstance().d("File " + path + " was scanned successfully: " + uri);
+                            if (path == null) {
+                                IpLogger.getInstance().d("This should not happen, go back to Immediate implemenation");
+                                path = currentImagePath;
+                            }
 
-                        if (path == null) {
-                            IpLogger.getInstance().d("This should not happen, go back to Immediate implemenation");
-                            path = currentImagePath;
+                            imageReadyListener.onImageReady(ImageFactory.singleListFromPath(path));
+                            ImagePickerUtils.revokeAppPermission(context, imageUri);
+
                         }
-
-                        imageReadyListener.onImageReady(ImageFactory.singleListFromPath(path));
-                        ImagePickerUtils.revokeAppPermission(context, imageUri);
                     });
         }
     }
